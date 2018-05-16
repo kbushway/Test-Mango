@@ -121,7 +121,44 @@ public class EmailEventHandlerModel extends AbstractEventHandlerModel<EmailEvent
         	list.add(EmailRecipientModel.createBean(m));
         this.data.setInactiveRecipients(list);
     }
+
+    public boolean isSendAcknowledge() {
+        return this.data.isSendAcknowledge();
+    }
+
+    public void setSendAcknowledge(boolean sendAcknowledge) {
+        this.data.setSendAcknowledge(sendAcknowledge);
+    }
     
+    public boolean isSendAcknowledgeEvenIfInactive() {
+        return this.data.isSendAcknowledgeEvenIfInactive();
+    }
+    
+    public void setSendAcknowledgeEvenIfInactive(boolean sendAcknowledgeEvenIfInactive) {
+        this.data.setSendAcknowledgeEvenIfInactive(sendAcknowledgeEvenIfInactive);
+    }
+
+    public boolean isAcknowledgeOverride() {
+        return this.data.isAcknowledgeOverride();
+    }
+
+    public void setAcknowledgeOverride(boolean acknowledgeOverride) {
+        this.data.setAcknowledgeOverride(acknowledgeOverride);
+    }
+
+    public List<EmailRecipientModel<?>> getAcknowledgeRecipients() {
+        List<EmailRecipientModel<?>> models = new ArrayList<EmailRecipientModel<?>>();
+        for(RecipientListEntryBean b : this.data.getAcknowledgeRecipients())
+            models.add(EmailRecipientModel.createModel(b));
+        return models;
+    }
+
+    public void setAcknowledgeRecipients(List<EmailRecipientModel<?>> acknowledgeRecipients) {
+        List<RecipientListEntryBean> list = new ArrayList<RecipientListEntryBean>(acknowledgeRecipients.size());
+        for(EmailRecipientModel<?> m : acknowledgeRecipients)
+            list.add(EmailRecipientModel.createBean(m));
+        this.data.setAcknowledgeRecipients(list);
+    }
 
     public boolean isIncludeSystemInfo(){
     	return this.data.isIncludeSystemInfo();

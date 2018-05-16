@@ -51,5 +51,21 @@ public class ProcessEventHandlerModel extends AbstractEventHandlerModel<ProcessE
     public void setInactiveProcessTimeout(int inactiveProcessTimeout) {
         this.data.setInactiveProcessTimeout(inactiveProcessTimeout);
     }
+    
+    public String getAcknowledgeProcessCommand() {
+        return this.data.getAcknowledgeProcessCommand();
+    }
+
+    public void setAcknowledgeProcessCommand(String acknowledgeProcessCommand) {
+        this.data.setAcknowledgeProcessCommand(acknowledgeProcessCommand);
+    }
+
+    public int getAcknowledgeProcessTimeout() {
+        return this.data.getAcknowledgeProcessTimeout();
+    }
+
+    public void setAcknowledgeProcessTimeout(int acknowledgeProcessTimeout) {
+        this.data.setAcknowledgeProcessTimeout(acknowledgeProcessTimeout);
+    }
 	
 }

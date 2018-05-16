@@ -27,6 +27,12 @@ public class ProcessHandlerRT extends EventHandlerRT<ProcessEventHandlerVO> {
     public void eventInactive(EventInstance evt) {
         executeCommand(vo.getInactiveProcessCommand(), vo.getInactiveProcessTimeout());
     }
+    
+    @Override
+    public void eventAcknowledged(EventInstance evt) {
+        if(evt.isActive() || vo.isAcknowledgeProcessEvenIfInactive())
+            executeCommand(vo.getAcknowledgeProcessCommand(), vo.getAcknowledgeProcessTimeout());
+    }
 
     private void executeCommand(String command, int timeout) {
         if (StringUtils.isBlank(command))

@@ -51,6 +51,14 @@ public class SetPointEventHandlerModel extends AbstractEventHandlerModel<SetPoin
         this.data.setInactiveAction(SetPointEventHandlerVO.SET_ACTION_CODES.getId(inactiveAction));
     }
     
+    public String getAcknowledgeAction() {
+        return SetPointEventHandlerVO.SET_ACTION_CODES.getCode(this.data.getAcknowledgeAction());
+    }
+
+    public void setAcknowledgeAction(String acknowledgeAction) {
+        this.data.setAcknowledgeAction(SetPointEventHandlerVO.SET_ACTION_CODES.getId(acknowledgeAction));
+    }
+    
     public String getActiveValueToSet() {
         return this.data.getActiveValueToSet();
     }
@@ -83,6 +91,30 @@ public class SetPointEventHandlerModel extends AbstractEventHandlerModel<SetPoin
         this.data.setInactivePointId(inactivePointId);
     }
     
+    public String getAcknowledgeValueToSet() {
+        return this.data.getAcknowledgeValueToSet();
+    }
+
+    public void setAcknowledgeValueToSet(String acknowledgeValueToSet) {
+        this.data.setAcknowledgeValueToSet(acknowledgeValueToSet);
+    }
+
+    public int getAcknowledgePointId() {
+        return this.data.getAcknowledgePointId();
+    }
+
+    public void setAcknowledgePointId(int acknowledgePointId) {
+        this.data.setAcknowledgePointId(acknowledgePointId);
+    }
+    
+    public boolean isAcknowledgeActionEvenIfInactive() {
+        return this.data.isAcknowledgeActionEvenIfInactive();
+    }
+    
+    public void setAcknowledgeActionEvenIfInactive(boolean acknowledgeActionEvenIfInactive) {
+        this.data.setAcknowledgeActionEvenIfInactive(acknowledgeActionEvenIfInactive);
+    }
+    
     public String getActiveScript(){
     	return this.data.getActiveScript();
     }
@@ -97,6 +129,14 @@ public class SetPointEventHandlerModel extends AbstractEventHandlerModel<SetPoin
     
     public void setInactiveScript(String inactiveScript){
     	this.data.setInactiveScript(inactiveScript);
+    }
+    
+    public String getAcknowledgeScript(){
+        return this.data.getAcknowledgeScript();
+    }
+    
+    public void setAcknowledgeScript(String acknowledgeScript){
+        this.data.setAcknowledgeScript(acknowledgeScript);
     }
     
     public List<IntStringPair> getAdditionalContext() {

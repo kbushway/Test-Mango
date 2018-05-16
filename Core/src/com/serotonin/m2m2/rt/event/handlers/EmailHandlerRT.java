@@ -88,7 +88,8 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
     private enum NotificationType {
         ACTIVE("active", "ftl.subject.active"), //
         ESCALATION("escalation", "ftl.subject.escalation"), //
-        INACTIVE("inactive", "ftl.subject.inactive");
+        INACTIVE("inactive", "ftl.subject.inactive"), //
+        ACKNOWLEDGE("acknowledge", "ftl.subject.acknowledge"); //TODO create acknowledge.ftl file
 
         String file;
         String key;
@@ -108,9 +109,10 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
     }
 
     /**
-     * The list of all of the recipients - active and escalation - for sending upon inactive if configured to do so.
+     * The list of all of the recipients - active and escalation - for sending upon acknowledge or inactive if configured to do so.
      */
     private Set<String> inactiveRecipients;
+    private Set<String> acknowledgeRecipients;
 
     public EmailHandlerRT(EmailEventHandlerVO vo) {
         super(vo);
@@ -136,6 +138,14 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
                         new DateTime(evt.getActiveTimestamp()));
             else
                 inactiveRecipients = activeRecipients;
+        }
+        
+        if (vo.isSendAcknowledge()) {
+            if (vo.isAcknowledgeOverride())
+                acknowledgeRecipients = MailingListDao.instance.getRecipientAddresses(vo.getAcknowledgeRecipients(),
+                        new DateTime(evt.getActiveTimestamp()));
+            else
+                acknowledgeRecipients = activeRecipients;
         }
 
         // If an escalation is to be sent, set up timeout to trigger it.
@@ -181,6 +191,14 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
         if (inactiveRecipients != null && inactiveRecipients.size() > 0)
             // Send an email to the inactive recipients.
             sendEmail(evt, NotificationType.INACTIVE, inactiveRecipients);
+    }
+    
+    @Override
+    public void eventAcknowledged(EventInstance evt) {
+        //TODO decide if we cancel escalation?
+        if(evt.isActive() || vo.isSendAcknowledgeEvenIfInactive())
+            if(acknowledgeRecipients != null && acknowledgeRecipients.size() > 0)
+                sendEmail(evt, NotificationType.ACKNOWLEDGE, acknowledgeRecipients);
     }
 
     public static void sendActiveEmail(EventInstance evt, Set<String> addresses) {

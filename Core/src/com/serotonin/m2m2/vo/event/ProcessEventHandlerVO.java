@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.serotonin.json.JsonException;
 import com.serotonin.json.JsonReader;
 import com.serotonin.json.ObjectWriter;
+import com.serotonin.json.type.JsonBoolean;
 import com.serotonin.json.type.JsonNumber;
 import com.serotonin.json.type.JsonObject;
 import com.serotonin.m2m2.i18n.ProcessResult;
@@ -32,6 +33,9 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
     private int activeProcessTimeout = 15;
     private String inactiveProcessCommand;
     private int inactiveProcessTimeout = 15;
+    private String acknowledgeProcessCommand;
+    private int acknowledgeProcessTimeout = 15;
+    private boolean acknowledgeProcessEvenIfInactive;
     
 	public String getActiveProcessCommand() {
         return activeProcessCommand;
@@ -64,6 +68,31 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
     public void setInactiveProcessTimeout(int inactiveProcessTimeout) {
         this.inactiveProcessTimeout = inactiveProcessTimeout;
     }
+
+    public String getAcknowledgeProcessCommand() {
+        return acknowledgeProcessCommand;
+    }
+
+    public void setAcknowledgeProcessCommand(String acknowledgeProcessCommand) {
+        this.acknowledgeProcessCommand = acknowledgeProcessCommand;
+    }
+    
+    public int getAcknowledgeProcessTimeout() {
+        return acknowledgeProcessTimeout;
+    }
+
+    public void setAcknowledgeProcessTimeout(int acknowledgeProcessTimeout) {
+        this.acknowledgeProcessTimeout = acknowledgeProcessTimeout;
+    }
+
+    public boolean isAcknowledgeProcessEvenIfInactive() {
+        return acknowledgeProcessEvenIfInactive;
+    }
+
+    public void setAcknowledgeProcessEvenIfInactive(boolean acknowledgeProcessEvenIfInactive) {
+        this.acknowledgeProcessEvenIfInactive = acknowledgeProcessEvenIfInactive;
+    }
+
     
     @Override
     public void validate(ProcessResult response) {
@@ -76,6 +105,9 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
 
         if (!StringUtils.isBlank(inactiveProcessCommand) && inactiveProcessTimeout <= 0)
             response.addGenericMessage("validate.greaterThanZero");
+        
+        if (!StringUtils.isBlank(acknowledgeProcessCommand) && acknowledgeProcessTimeout <= 0)
+            response.addGenericMessage("validate.greaterThanZero");
     }
     
     //
@@ -83,7 +115,7 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
     // Serialization
     //
     private static final long serialVersionUID = -1;
-    private static final int version = 1;
+    private static final int version = 2;
 
     private void writeObject(ObjectOutputStream out) throws IOException {
     	out.writeInt(version);
@@ -91,6 +123,9 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
         out.writeInt(activeProcessTimeout);
         SerializationHelper.writeSafeUTF(out, inactiveProcessCommand);
         out.writeInt(inactiveProcessTimeout);
+        SerializationHelper.writeSafeUTF(out, acknowledgeProcessCommand);
+        out.writeInt(acknowledgeProcessTimeout);
+        out.writeBoolean(acknowledgeProcessEvenIfInactive);
     }
     
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -100,6 +135,18 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
 		    activeProcessTimeout = in.readInt();
 		    inactiveProcessCommand = SerializationHelper.readSafeUTF(in);
 		    inactiveProcessTimeout = in.readInt();
+		    acknowledgeProcessCommand = null;
+		    acknowledgeProcessTimeout = 15;
+		    acknowledgeProcessEvenIfInactive = false;
+        }
+        else if(ver == 2) {
+            activeProcessCommand = SerializationHelper.readSafeUTF(in);
+            activeProcessTimeout = in.readInt();
+            inactiveProcessCommand = SerializationHelper.readSafeUTF(in);
+            inactiveProcessTimeout = in.readInt();
+            acknowledgeProcessCommand = SerializationHelper.readSafeUTF(in);
+            acknowledgeProcessTimeout = in.readInt();
+            acknowledgeProcessEvenIfInactive = in.readBoolean();
         }
     }
     
@@ -110,6 +157,9 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
         writer.writeEntry("activeProcessTimeout", activeProcessTimeout);
         writer.writeEntry("inactiveProcessCommand", inactiveProcessCommand);
         writer.writeEntry("inactiveProcessTimeout", inactiveProcessTimeout);
+        writer.writeEntry("acknowledgeProcessCommand", acknowledgeProcessCommand);
+        writer.writeEntry("acknowledgeProcessTimeout", acknowledgeProcessTimeout);
+        writer.writeEntry("acknowledgeProcessEvenIfInactive", acknowledgeProcessEvenIfInactive);
     }
     
     @Override
@@ -131,6 +181,17 @@ public class ProcessEventHandlerVO extends AbstractEventHandlerVO<ProcessEventHa
         if (i != null)
             inactiveProcessTimeout = i.intValue();
 
+        text = jsonObject.getString("acknowledgeProcessCommand");
+        if (text != null)
+            acknowledgeProcessCommand = text;
+
+        i = jsonObject.getJsonNumber("acknowledgeProcessTimeout");
+        if (i != null)
+            acknowledgeProcessTimeout = i.intValue();
+        
+        JsonBoolean b = jsonObject.getJsonBoolean("acknowledgeProcessEvenIfInactive");
+        if(b != null)
+            acknowledgeProcessEvenIfInactive = b.booleanValue();
     }
     
     @Override

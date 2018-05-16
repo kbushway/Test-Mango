@@ -19,8 +19,10 @@ import com.serotonin.json.JsonException;
 import com.serotonin.json.JsonReader;
 import com.serotonin.json.ObjectWriter;
 import com.serotonin.json.type.JsonArray;
+import com.serotonin.json.type.JsonBoolean;
 import com.serotonin.json.type.JsonObject;
 import com.serotonin.json.type.JsonValue;
+import com.serotonin.m2m2.Common;
 import com.serotonin.m2m2.DataTypes;
 import com.serotonin.m2m2.db.dao.DataPointDao;
 import com.serotonin.m2m2.i18n.ProcessResult;
@@ -66,8 +68,13 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
     private int inactiveAction;
     private String inactiveValueToSet;
     private int inactivePointId;
+    private int acknowledgeAction;
+    private boolean acknowledgeActionEvenIfInactive;
+    private String acknowledgeValueToSet;
+    private int acknowledgePointId;
     private String activeScript;
     private String inactiveScript;
+    private String acknowledgeScript;
     private ScriptPermissions scriptPermissions;
     private List<IntStringPair> additionalContext;
     
@@ -126,6 +133,38 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
     public void setInactivePointId(int inactivePointId) {
         this.inactivePointId = inactivePointId;
     }
+
+    public int getAcknowledgeAction() {
+        return acknowledgeAction;
+    }
+
+    public void setAcknowledgeAction(int acknowledgeAction) {
+        this.acknowledgeAction = acknowledgeAction;
+    }
+
+    public boolean isAcknowledgeActionEvenIfInactive() {
+        return acknowledgeActionEvenIfInactive;
+    }
+
+    public void setAcknowledgeActionEvenIfInactive(boolean acknowledgeActionEvenIfInactive) {
+        this.acknowledgeActionEvenIfInactive = acknowledgeActionEvenIfInactive;
+    }
+
+    public String getAcknowledgeValueToSet() {
+        return acknowledgeValueToSet;
+    }
+
+    public void setAcknowledgeValueToSet(String acknowledgeValueToSet) {
+        this.acknowledgeValueToSet = acknowledgeValueToSet;
+    }
+
+    public int getAcknowledgePointId() {
+        return acknowledgePointId;
+    }
+
+    public void setAcknowledgePointId(int acknowledgePointId) {
+        this.acknowledgePointId = acknowledgePointId;
+    }
     
     public String getActiveScript() {
     	return activeScript;
@@ -141,6 +180,14 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
     
     public void setInactiveScript(String inactiveScript) {
     	this.inactiveScript = inactiveScript;
+    }
+
+    public String getAcknowledgeScript() {
+        return acknowledgeScript;
+    }
+
+    public void setAcknowledgeScript(String acknowledgeScript) {
+        this.acknowledgeScript = acknowledgeScript;
     }
     
     public ScriptPermissions getScriptPermissions() {
@@ -273,7 +320,7 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
     // Serialization
     //
     private static final long serialVersionUID = -1;
-    private static final int version = 3;
+    private static final int version = 4;
     
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.writeInt(version);
@@ -284,8 +331,13 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
         out.writeInt(inactiveAction);
         SerializationHelper.writeSafeUTF(out, inactiveValueToSet);
         out.writeInt(inactivePointId);
+        out.writeInt(acknowledgeAction);
+        out.writeBoolean(acknowledgeActionEvenIfInactive);
+        SerializationHelper.writeSafeUTF(out, acknowledgeValueToSet);
+        out.writeInt(acknowledgePointId);
         SerializationHelper.writeSafeUTF(out, activeScript);
         SerializationHelper.writeSafeUTF(out, inactiveScript);
+        SerializationHelper.writeSafeUTF(out, acknowledgeScript);
         out.writeObject(additionalContext);
         out.writeObject(scriptPermissions);
     }
@@ -303,7 +355,11 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
             inactiveAction = in.readInt();
             inactiveValueToSet = SerializationHelper.readSafeUTF(in);
             inactivePointId = in.readInt();
-            activeScript = inactiveScript = null;
+            acknowledgeAction = SET_ACTION_NONE;
+            acknowledgeActionEvenIfInactive = false;
+            acknowledgeValueToSet = null;
+            acknowledgePointId = Common.NEW_ID;
+            activeScript = inactiveScript = acknowledgeScript = null;
             additionalContext = new ArrayList<IntStringPair>();
             scriptPermissions = new ScriptPermissions();
         } else if (ver == 2) {
@@ -314,8 +370,13 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
             inactiveAction = in.readInt();
             inactiveValueToSet = SerializationHelper.readSafeUTF(in);
             inactivePointId = in.readInt();
+            acknowledgeAction = SET_ACTION_NONE;
+            acknowledgeActionEvenIfInactive = false;
+            acknowledgeValueToSet = null;
+            acknowledgePointId = Common.NEW_ID;
             activeScript = SerializationHelper.readSafeUTF(in);
             inactiveScript = SerializationHelper.readSafeUTF(in);
+            acknowledgeScript = null;
             additionalContext = new ArrayList<IntStringPair>();
             scriptPermissions = new ScriptPermissions();
         } else if (ver == 3) {
@@ -326,8 +387,30 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
             inactiveAction = in.readInt();
             inactiveValueToSet = SerializationHelper.readSafeUTF(in);
             inactivePointId = in.readInt();
+            acknowledgeAction = SET_ACTION_NONE;
+            acknowledgeActionEvenIfInactive = false;
+            acknowledgeValueToSet = null;
+            acknowledgePointId = Common.NEW_ID;
             activeScript = SerializationHelper.readSafeUTF(in);
             inactiveScript = SerializationHelper.readSafeUTF(in);
+            acknowledgeScript = null;
+            additionalContext = (List<IntStringPair>) in.readObject();
+            scriptPermissions = (ScriptPermissions) in.readObject();
+        } else if (ver == 4) {
+            targetPointId = in.readInt();
+            activeAction = in.readInt();
+            activeValueToSet = SerializationHelper.readSafeUTF(in);
+            activePointId = in.readInt();
+            inactiveAction = in.readInt();
+            inactiveValueToSet = SerializationHelper.readSafeUTF(in);
+            inactivePointId = in.readInt();
+            acknowledgeAction = in.readInt();
+            acknowledgeActionEvenIfInactive = in.readBoolean();
+            acknowledgeValueToSet = SerializationHelper.readSafeUTF(in);
+            acknowledgePointId = in.readInt();
+            activeScript = SerializationHelper.readSafeUTF(in);
+            inactiveScript = SerializationHelper.readSafeUTF(in);
+            acknowledgeScript = SerializationHelper.readSafeUTF(in);;
             additionalContext = (List<IntStringPair>) in.readObject();
             scriptPermissions = (ScriptPermissions) in.readObject();
         }
@@ -361,6 +444,18 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
             writer.writeEntry("inactiveValueToSet", inactiveValueToSet);
         else if (inactiveAction == SET_ACTION_SCRIPT_VALUE)
         	writer.writeEntry("inactiveScript", inactiveScript);
+        
+        // Acknowledge
+        writer.writeEntry("acknowledgeAction", SET_ACTION_CODES.getCode(acknowledgeAction));
+        writer.writeEntry("acknowledgeActionEvenIfInactive", acknowledgeActionEvenIfInactive);
+        if (acknowledgeAction == SET_ACTION_POINT_VALUE) {
+            dpXid = DataPointDao.instance.getXidById(acknowledgePointId);
+            writer.writeEntry("acknowledgePointId", dpXid);
+        }
+        else if (acknowledgeAction == SET_ACTION_STATIC_VALUE)
+            writer.writeEntry("acknowledgeValueToSet", acknowledgeValueToSet);
+        else if (acknowledgeAction == SET_ACTION_SCRIPT_VALUE)
+            writer.writeEntry("inactiveScript", acknowledgeScript);
         
         JsonArray context = new JsonArray();
         for(IntStringPair pnt : additionalContext) {
@@ -456,6 +551,40 @@ public class SetPointEventHandlerVO extends AbstractEventHandlerVO<SetPointEvent
             if (text == null)
             	throw new TranslatableJsonException("emport.error.eventHandler.invalid", "inactiveScript");
             inactiveValueToSet = text;
+        }
+        
+        //Acknowledge
+        text = jsonObject.getString("acknowledgeAction");
+        if (text != null) {
+            acknowledgeAction = SET_ACTION_CODES.getId(text);
+            if (!SET_ACTION_CODES.isValidId(acknowledgeAction))
+                throw new TranslatableJsonException("emport.error.eventHandler.invalid", "acknowledgeAction", text,
+                        SET_ACTION_CODES.getCodeList());
+        }
+        
+        JsonBoolean b = jsonObject.getJsonBoolean("acknowledgeActionEvenIfInactive");
+        if (b != null)
+            acknowledgeActionEvenIfInactive = b.booleanValue();
+        
+        if (acknowledgeAction == SET_ACTION_POINT_VALUE) {
+            xid = jsonObject.getString("acknowledgePointId");
+            if (xid != null) {
+                Integer id = dataPointDao.getIdByXid(xid);
+                if (id == null)
+                    throw new TranslatableJsonException("emport.error.missingPoint", xid);
+                acknowledgePointId = id;
+            }
+        }
+        else if (acknowledgeAction == SET_ACTION_STATIC_VALUE) {
+            text = jsonObject.getString("acknowledgeValueToSet");
+            if (text != null)
+                acknowledgeValueToSet = text;
+        }
+        else if (acknowledgeAction == SET_ACTION_SCRIPT_VALUE) {
+            text = jsonObject.getString("acknowledgeScript");
+            if (text == null)
+                throw new TranslatableJsonException("emport.error.eventHandler.invalid", "acknowledgeScript");
+            acknowledgeValueToSet = text;
         }
 
         JsonArray context = jsonObject.getJsonArray("additionalContext");

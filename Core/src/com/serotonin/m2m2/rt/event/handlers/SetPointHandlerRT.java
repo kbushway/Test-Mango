@@ -52,6 +52,7 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
     private static final Log LOG = LogFactory.getLog(SetPointHandlerRT.class);
     private CompiledScript activeScript;
     private CompiledScript inactiveScript;
+    private CompiledScript acknowledgeScript;
     private final List<JsonImportExclusion> importExclusions;
     public static final PrintWriter NULL_WRITER = new PrintWriter(new NullWriter());
     private final SetCallback setCallback;
@@ -246,7 +247,80 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
         	}
         }
         else
-            throw new ShouldNeverHappenException("Unknown active action: " + vo.getInactiveAction());
+            throw new ShouldNeverHappenException("Unknown inactive action: " + vo.getInactiveAction());
+
+        Common.backgroundProcessing.addWorkItem(new SetPointWorkItem(vo.getTargetPointId(), new PointValueTime(value,
+                evt.getRtnTimestamp()), this));
+    }
+    
+    @Override
+    public void eventAcknowledged(EventInstance evt) {
+        if (vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_NONE || (!evt.isActive() && !vo.isAcknowledgeActionEvenIfInactive()))
+            return;
+        
+        // Validate that the target point is available.
+        DataPointRT targetPoint = Common.runtimeManager.getDataPoint(vo.getTargetPointId());
+        if (targetPoint == null) {
+            raiseFailureEvent(new TranslatableMessage("event.setPoint.targetPointMissing"), evt.getEventType());
+            return;
+        }
+
+        if (!targetPoint.getPointLocator().isSettable()) {
+            raiseFailureEvent(new TranslatableMessage("event.setPoint.targetNotSettable"), evt.getEventType());
+            return;
+        }
+
+        int targetDataType = targetPoint.getVO().getPointLocator().getDataTypeId();
+
+        DataValue value;
+        if (vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_POINT_VALUE) {
+            // Get the source data point.
+            DataPointRT sourcePoint = Common.runtimeManager.getDataPoint(vo.getAcknowledgePointId());
+            if (sourcePoint == null) {
+                raiseFailureEvent(new TranslatableMessage("event.setPoint.acknowledgePointMissing"), evt.getEventType());
+                return;
+            }
+
+            PointValueTime valueTime = sourcePoint.getPointValue();
+            if (valueTime == null) {
+                raiseFailureEvent(new TranslatableMessage("event.setPoint.acknowledgePointValue"), evt.getEventType());
+                return;
+            }
+
+            if (DataTypes.getDataType(valueTime.getValue()) != targetDataType) {
+                raiseFailureEvent(new TranslatableMessage("event.setPoint.acknowledgePointDataType"), evt.getEventType());
+                return;
+            }
+
+            value = valueTime.getValue();
+        }
+        else if (vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_STATIC_VALUE)
+            value = DataValue.stringToValue(vo.getAcknowledgeValueToSet(), targetDataType);
+        else if (vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_SCRIPT_VALUE) {
+            if(acknowledgeScript == null) {
+                raiseFailureEvent(new TranslatableMessage("eventHandlers.acknowledgeInactiveScript"), evt.getEventType());
+                return;
+            }
+            Map<String, IDataPointValueSource> context = new HashMap<String, IDataPointValueSource>();
+            context.put("target", targetPoint);
+            try {
+                PointValueTime pvt = CompiledScriptExecutor.execute(acknowledgeScript, context, new HashMap<String, Object>(), evt.getRtnTimestamp(), 
+                        targetPoint.getDataTypeId(), evt.getRtnTimestamp(), vo.getScriptPermissions(), NULL_WRITER, new ScriptLog(NULL_WRITER, LogLevel.FATAL),
+                        setCallback, importExclusions, false);
+                value = pvt.getValue();
+            } catch(ScriptPermissionsException e) {
+                raiseFailureEvent(e.getTranslatableMessage(), evt.getEventType());
+                return;
+            } catch(ScriptException e) {
+                raiseFailureEvent(new TranslatableMessage("eventHandlers.invalidAcknowledgeScriptError", e.getCause().getMessage()), evt.getEventType());
+                return;
+            } catch(ResultTypeException e) {
+                raiseFailureEvent(new TranslatableMessage("eventHandlers.invalidAcknowledgeScriptError", e.getMessage()), evt.getEventType());
+                return;
+            }
+        }
+        else
+            throw new ShouldNeverHappenException("Unknown acknowledge action: " + vo.getAcknowledgeAction());
 
         Common.backgroundProcessing.addWorkItem(new SetPointWorkItem(vo.getTargetPointId(), new PointValueTime(value,
                 evt.getRtnTimestamp()), this));

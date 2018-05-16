@@ -432,6 +432,8 @@ public class EventManagerImpl implements EventManager {
 		}
 		if(userEventMulticaster != null)
 		    Common.backgroundProcessing.addWorkItem(new EventNotifyWorkItem(userIdsToNotify, userEventMulticaster, evt, false, false, false, true));
+		handleAcknowledgeEvent(evt);
+		
 		return true;
 	}
 
@@ -989,6 +991,13 @@ public class EventManagerImpl implements EventManager {
 			for (EventHandlerRT<?> h : evt.getHandlers())
 				h.eventInactive(evt);
 		}
+	}
+	
+	private void handleAcknowledgeEvent(EventInstance evt) {
+	    if (evt.getHandlers() != null) {
+	        for (EventHandlerRT<?> h : evt.getHandlers())
+	            h.eventAcknowledged(evt);
+	    }
 	}
 	
 	

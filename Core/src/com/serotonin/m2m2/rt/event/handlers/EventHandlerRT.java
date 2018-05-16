@@ -31,4 +31,12 @@ abstract public class EventHandlerRT<T extends AbstractEventHandlerVO<?>> {
      * @param evt
      */
     abstract public void eventInactive(EventInstance evt);
+    
+    /**
+     * Called when the event is acknowledged.
+     * 
+     * @see EventManagerImpl.raiseEvent for details.
+     * @param evt
+     */
+    abstract public void eventAcknowledged(EventInstance evt);
 }

@@ -68,6 +68,10 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
     private boolean sendInactive;
     private boolean inactiveOverride;
     private List<RecipientListEntryBean> inactiveRecipients;
+    private boolean sendAcknowledge;
+    private boolean sendAcknowledgeEvenIfInactive = false;
+    private boolean acknowledgeOverride;
+    private List<RecipientListEntryBean> acknowledgeRecipients;
     private boolean includeSystemInfo; //Include Work Items and Service Thread Pool Data
     private int includePointValueCount = 10;
     private boolean includeLogfile;
@@ -148,6 +152,38 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
         this.inactiveRecipients = inactiveRecipients;
     }
 
+    public boolean isSendAcknowledge() {
+        return sendAcknowledge;
+    }
+
+    public void setSendAcknowledge(boolean sendAcknowledge) {
+        this.sendAcknowledge = sendAcknowledge;
+    }
+
+    public boolean isSendAcknowledgeEvenIfInactive() {
+        return sendAcknowledgeEvenIfInactive;
+    }
+
+    public void setSendAcknowledgeEvenIfInactive(boolean sendAcknowledgeEvenIfInactive) {
+        this.sendAcknowledgeEvenIfInactive = sendAcknowledgeEvenIfInactive;
+    }
+
+    public boolean isAcknowledgeOverride() {
+        return acknowledgeOverride;
+    }
+
+    public void setAcknowledgeOverride(boolean acknowledgeOverride) {
+        this.acknowledgeOverride = acknowledgeOverride;
+    }
+
+    public List<RecipientListEntryBean> getAcknowledgeRecipients() {
+        return acknowledgeRecipients;
+    }
+
+    public void setAcknowledgeRecipients(List<RecipientListEntryBean> acknowledgeRecipients) {
+        this.acknowledgeRecipients = acknowledgeRecipients;
+    }
+
     public boolean isIncludeSystemInfo(){
     	return this.includeSystemInfo;
     }
@@ -222,6 +258,11 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
                 response.addGenericMessage("eventHandlers.noInactiveRecips");
         }
         
+        if (sendAcknowledge && acknowledgeOverride) {
+            if (acknowledgeRecipients == null || acknowledgeRecipients.isEmpty())
+                response.addGenericMessage("eventHandlers.noAcknowledgeRecips");
+        }
+        
         List<String> varNameSpace = new ArrayList<String>();
         if(additionalContext != null){
 	        for(IntStringPair cxt : additionalContext) {
@@ -264,7 +305,7 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
     // Serialization
     //
     private static final long serialVersionUID = -1;
-    private static final int version = 5;
+    private static final int version = 6;
 
     private void writeObject(ObjectOutputStream out) throws IOException {
     	out.writeInt(version);
@@ -277,6 +318,10 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
         out.writeBoolean(sendInactive);
         out.writeBoolean(inactiveOverride);
         out.writeObject(inactiveRecipients);
+        out.writeBoolean(sendAcknowledge);
+        out.writeBoolean(sendAcknowledgeEvenIfInactive);
+        out.writeBoolean(acknowledgeOverride);
+        out.writeObject(acknowledgeRecipients);
         out.writeBoolean(includeSystemInfo);
         out.writeInt(includePointValueCount);
         out.writeBoolean(includeLogfile);
@@ -302,6 +347,10 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
             inactiveOverride = in.readBoolean();
             inactiveRecipients = (List<RecipientListEntryBean>) in.readObject();
             RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
+            sendAcknowledge = false;
+            sendAcknowledgeEvenIfInactive = false;
+            acknowledgeOverride = false;
+            acknowledgeRecipients = null;
             includeSystemInfo = in.readBoolean();
             includePointValueCount = in.readInt();
             includeLogfile = in.readBoolean();
@@ -323,6 +372,10 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
             inactiveOverride = in.readBoolean();
             inactiveRecipients = (List<RecipientListEntryBean>) in.readObject();
             RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
+            sendAcknowledge = false;
+            sendAcknowledgeEvenIfInactive = false;
+            acknowledgeOverride = false;
+            acknowledgeRecipients = null;
             includeSystemInfo = in.readBoolean();
             includePointValueCount = in.readInt();
             includeLogfile = in.readBoolean();
@@ -344,6 +397,10 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
             inactiveOverride = in.readBoolean();
             inactiveRecipients = (List<RecipientListEntryBean>) in.readObject();
             RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
+            sendAcknowledge = false;
+            sendAcknowledgeEvenIfInactive = false;
+            acknowledgeOverride = false;
+            acknowledgeRecipients = null;
             includeSystemInfo = in.readBoolean();
             includePointValueCount = in.readInt();
             includeLogfile = in.readBoolean();
@@ -365,6 +422,10 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
             inactiveOverride = in.readBoolean();
             inactiveRecipients = (List<RecipientListEntryBean>) in.readObject();
             RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
+            sendAcknowledge = false;
+            sendAcknowledgeEvenIfInactive = false;
+            acknowledgeOverride = false;
+            acknowledgeRecipients = null;
             includeSystemInfo = in.readBoolean();
             includePointValueCount = in.readInt();
             includeLogfile = in.readBoolean();
@@ -385,6 +446,36 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
             sendInactive = in.readBoolean();
             inactiveOverride = in.readBoolean();
             inactiveRecipients = (List<RecipientListEntryBean>) in.readObject();
+            RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
+            sendAcknowledge = false;
+            sendAcknowledgeEvenIfInactive = false;
+            acknowledgeOverride = false;
+            acknowledgeRecipients = null;
+            includeSystemInfo = in.readBoolean();
+            includePointValueCount = in.readInt();
+            includeLogfile = in.readBoolean();
+            customTemplate = SerializationHelper.readSafeUTF(in);
+            additionalContext = (List<IntStringPair>) in.readObject();
+            scriptPermissions = (ScriptPermissions) in.readObject();
+            script = SerializationHelper.readSafeUTF(in);
+        }
+        else if (ver == 6) {
+            activeRecipients = (List<RecipientListEntryBean>) in.readObject();
+            RecipientListEntryBean.cleanRecipientList(activeRecipients);
+            sendEscalation = in.readBoolean();
+            repeatEscalations = in.readBoolean();
+            escalationDelayType = in.readInt();
+            escalationDelay = in.readInt();
+            escalationRecipients = (List<RecipientListEntryBean>) in.readObject();
+            RecipientListEntryBean.cleanRecipientList(escalationRecipients);
+            sendInactive = in.readBoolean();
+            inactiveOverride = in.readBoolean();
+            inactiveRecipients = (List<RecipientListEntryBean>) in.readObject();
+            RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
+            sendAcknowledge = in.readBoolean();
+            sendAcknowledgeEvenIfInactive = in.readBoolean();
+            acknowledgeOverride = in.readBoolean();
+            acknowledgeRecipients = (List<RecipientListEntryBean>) in.readObject();
             RecipientListEntryBean.cleanRecipientList(inactiveRecipients);
             includeSystemInfo = in.readBoolean();
             includePointValueCount = in.readInt();
@@ -412,6 +503,13 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
             writer.writeEntry("inactiveOverride", inactiveOverride);
             if (inactiveOverride)
                 writer.writeEntry("inactiveRecipients", inactiveRecipients);
+        }
+        writer.writeEntry("sendAcknowledge", sendAcknowledge);
+        if (sendAcknowledge) {
+            writer.writeEntry("sendAcknowledgeEvenIfInactive", sendAcknowledgeEvenIfInactive);
+            writer.writeEntry("acknowledgeOverride", acknowledgeOverride);
+            if (acknowledgeOverride)
+                writer.writeEntry("acknowledgeRecipients", acknowledgeRecipients);
         }
         writer.writeEntry("includeSystemInformation", includeSystemInfo);
         writer.writeEntry("includePointValueCount", includePointValueCount);
@@ -495,6 +593,28 @@ public class EmailEventHandlerVO extends AbstractEventHandlerVO<EmailEventHandle
                             jsonInactiveRecipients);
             }
         }
+        
+        b = jsonObject.getJsonBoolean("sendAcknowledge");
+        if(b != null)
+            sendAcknowledge = b.booleanValue();
+        
+        if (sendAcknowledge) {
+            b = jsonObject.getJsonBoolean("sendAcknowledgeEvenIfInactive");
+            if (b != null)
+                sendAcknowledgeEvenIfInactive = b.booleanValue();
+            
+            b = jsonObject.getJsonBoolean("acknowledgeOverride");
+            if (b != null)
+                acknowledgeOverride = b.booleanValue();
+            
+            if(acknowledgeOverride) {
+                JsonArray jsonAcknowledgeRecipients = jsonObject.getJsonArray("acknowledgeRecipients");
+                if (jsonAcknowledgeRecipients != null)
+                    acknowledgeRecipients = (List<RecipientListEntryBean>) reader.read(recipType,
+                            jsonAcknowledgeRecipients);
+            }
+        }
+            
         b = jsonObject.getJsonBoolean("includeSystemInformation");
         if(b != null)
         	includeSystemInfo = b.booleanValue();
