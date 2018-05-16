@@ -255,7 +255,8 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
     
     @Override
     public void eventAcknowledged(EventInstance evt) {
-        if (vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_NONE || (!evt.isActive() && !vo.isAcknowledgeActionEvenIfInactive()))
+        if (vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_NONE || 
+                (!evt.isActive() && evt.isRtnApplicable() && !vo.isAcknowledgeActionEvenIfInactive()))
             return;
         
         // Validate that the target point is available.

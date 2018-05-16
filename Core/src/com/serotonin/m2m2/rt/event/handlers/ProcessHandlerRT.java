@@ -30,7 +30,7 @@ public class ProcessHandlerRT extends EventHandlerRT<ProcessEventHandlerVO> {
     
     @Override
     public void eventAcknowledged(EventInstance evt) {
-        if(evt.isActive() || vo.isAcknowledgeProcessEvenIfInactive())
+        if(evt.isActive() || !evt.isRtnApplicable() || vo.isAcknowledgeProcessEvenIfInactive())
             executeCommand(vo.getAcknowledgeProcessCommand(), vo.getAcknowledgeProcessTimeout());
     }
 

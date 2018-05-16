@@ -196,7 +196,7 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
     @Override
     public void eventAcknowledged(EventInstance evt) {
         //TODO decide if we cancel escalation?
-        if(evt.isActive() || vo.isSendAcknowledgeEvenIfInactive())
+        if(evt.isActive() || !evt.isRtnApplicable() || vo.isSendAcknowledgeEvenIfInactive())
             if(acknowledgeRecipients != null && acknowledgeRecipients.size() > 0)
                 sendEmail(evt, NotificationType.ACKNOWLEDGE, acknowledgeRecipients);
     }
