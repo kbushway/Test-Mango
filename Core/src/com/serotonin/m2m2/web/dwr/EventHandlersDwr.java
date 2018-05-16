@@ -255,7 +255,8 @@ public class EventHandlersDwr extends BaseDwr {
     public ProcessResult saveSetPointEventHandler(String eventType, String eventSubtype, int eventTypeRef1,
             int eventTypeRef2, int handlerId, String xid, String alias, boolean disabled, int targetPointId,
             int activeAction, String activeValueToSet, int activePointId, String activeScript, int inactiveAction,
-            String inactiveValueToSet, int inactivePointId, String inactiveScript, List<IntStringPair> additionalContext,
+            String inactiveValueToSet, int inactivePointId, String inactiveScript, int acknowledgeAction, boolean acknowledgeActionEvenIfInactive,
+            String acknowledgeValueToSet, int acknowledgePointId, String acknowledgeScript, List<IntStringPair> additionalContext,
             ScriptPermissions scriptPermissions) {
         SetPointEventHandlerVO handler = new SetPointEventHandlerVO();
         handler.setDefinition(ModuleRegistry.getEventHandlerDefinition(SetPointEventHandlerDefinition.TYPE_NAME));
@@ -268,6 +269,11 @@ public class EventHandlersDwr extends BaseDwr {
         handler.setInactiveValueToSet(inactiveValueToSet);
         handler.setInactivePointId(inactivePointId);
         handler.setInactiveScript(inactiveScript);
+        handler.setAcknowledgeAction(acknowledgeAction);
+        handler.setAcknowledgeActionEvenIfInactive(acknowledgeActionEvenIfInactive);
+        handler.setAcknowledgeValueToSet(acknowledgeValueToSet);
+        handler.setAcknowledgePointId(acknowledgePointId);
+        handler.setAcknowledgeScript(acknowledgeScript);
         handler.setAdditionalContext(additionalContext);
         handler.setScriptPermissions(scriptPermissions);
         return save(eventType, eventSubtype, eventTypeRef1, eventTypeRef2, handler, handlerId, xid, alias, disabled);
@@ -278,7 +284,8 @@ public class EventHandlersDwr extends BaseDwr {
             int eventTypeRef2, int handlerId, String xid, String alias, boolean disabled,
             List<RecipientListEntryBean> activeRecipients, String customTemplate, boolean sendEscalation, boolean repeatEscalations,
             int escalationDelayType, int escalationDelay, List<RecipientListEntryBean> escalationRecipients, boolean sendInactive,
-            boolean inactiveOverride, List<RecipientListEntryBean> inactiveRecipients, boolean includeSystemInfo, 
+            boolean inactiveOverride, List<RecipientListEntryBean> inactiveRecipients, boolean sendAcknowledge, boolean sendAcknowledgeEvenIfInactive, 
+            boolean acknowledgeOverride, List<RecipientListEntryBean> acknowledgeRecipients, boolean includeSystemInfo, 
             int includePointValueCount, boolean includeLogfile, List<IntStringPair> additionalContext, 
             ScriptPermissions permissions, String script) {
         EmailEventHandlerVO handler = new EmailEventHandlerVO();
@@ -293,6 +300,10 @@ public class EventHandlersDwr extends BaseDwr {
         handler.setSendInactive(sendInactive);
         handler.setInactiveOverride(inactiveOverride);
         handler.setInactiveRecipients(inactiveRecipients);
+        handler.setSendAcknowledge(sendAcknowledge);
+        handler.setSendAcknowledgeEvenIfInactive(sendAcknowledgeEvenIfInactive);
+        handler.setAcknowledgeOverride(acknowledgeOverride);
+        handler.setAcknowledgeRecipients(acknowledgeRecipients);
         handler.setIncludeSystemInfo(includeSystemInfo);
         handler.setIncludePointValueCount(includePointValueCount);
         handler.setIncludeLogfile(includeLogfile);
@@ -305,13 +316,17 @@ public class EventHandlersDwr extends BaseDwr {
     @DwrPermission(user = true)
     public ProcessResult saveProcessEventHandler(String eventType, String eventSubtype, int eventTypeRef1,
             int eventTypeRef2, int handlerId, String xid, String alias, boolean disabled, String activeProcessCommand,
-            int activeProcessTimeout, String inactiveProcessCommand, int inactiveProcessTimeout) {
+            int activeProcessTimeout, String inactiveProcessCommand, int inactiveProcessTimeout, String acknowledgeProcessCommand,
+            int acknowledgeProcessTimeout, boolean acknowledgeProcessEvenIfInactive) {
         ProcessEventHandlerVO handler = new ProcessEventHandlerVO();
         handler.setDefinition(ModuleRegistry.getEventHandlerDefinition(ProcessEventHandlerDefinition.TYPE_NAME));
         handler.setActiveProcessCommand(activeProcessCommand);
         handler.setActiveProcessTimeout(activeProcessTimeout);
         handler.setInactiveProcessCommand(inactiveProcessCommand);
         handler.setInactiveProcessTimeout(inactiveProcessTimeout);
+        handler.setAcknowledgeProcessCommand(acknowledgeProcessCommand);
+        handler.setAcknowledgeProcessTimeout(acknowledgeProcessTimeout);
+        handler.setAcknowledgeProcessEvenIfInactive(acknowledgeProcessEvenIfInactive);
         return save(eventType, eventSubtype, eventTypeRef1, eventTypeRef2, handler, handlerId, xid, alias, disabled);
     }
 

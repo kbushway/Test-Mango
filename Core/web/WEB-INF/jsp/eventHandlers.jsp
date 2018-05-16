@@ -168,6 +168,12 @@
             inactiveRecipients.write("inactiveRecipients", "inactiveRecipients", "inactiveAddresses2",
                     "<m2m2:translate key="eventHandlers.inactiveRecipients" escapeDQuotes="true"/>");
             
+            acknowledgeRecipients = new mango.erecip.EmailRecipients("acknowledgeRecipients",
+                    "<m2m2:translate key="eventHandlers.acknowledgeTestEmailMessage" escapeDQuotes="true"/>",
+                    data.mailingLists, data.users);
+            acknowledgeRecipients.write("acknowledgeRecipients", "acknowledgeRecipients", "acknowledgeAddresses2",
+                    "<m2m2:translate key="eventHandlers.acknowledgeRecipients" escapeDQuotes="true"/>");
+            
             var storeItems = [];
             
             //
@@ -465,8 +471,11 @@
                 targetPointSelector.set('value',handler.targetPointId);
                 $set("activeAction", handler.activeAction);
                 $set("inactiveAction", handler.inactiveAction);
+                $set("acknowledgeAction", handler.acknowledgeAction);
+                $set("acknowledgeActionEvenIfInactive", handler.acknowledgeActionEvenIfInactive);
                 activeEditor.setValue(handler.activeScript);
                 inactiveEditor.setValue(handler.inactiveScript);
+                acknowledgeEditor.setValue(handler.acknowledgeScript);
                 contextArray = new Array();
                 for(var k = 0; k < handler.additionalContext.length; k+=1)
                 	addToContextArray(handler.additionalContext[k].key, handler.additionalContext[k].value)
@@ -481,10 +490,14 @@
                 escalRecipients.updateRecipientList(handler.escalationRecipients);
                 $set("sendInactive", handler.sendInactive);
                 $set("inactiveOverride", handler.inactiveOverride);
+                $set("sendAcknowledge", handler.sendAcknowledge);
+                $set("sendAcknowledgeEvenIfInactive", handler.sendAcknowledgeEvenIfInactive);
+                $set("acknowledgeOverride", handler.acknowledgeOverride);
                 $set("includeSystemInfo", handler.includeSystemInfo);
                 $set("includeLogfile", handler.includeLogfile);
                 $set("includePointValueCount", handler.includePointValueCount);
                 inactiveRecipients.updateRecipientList(handler.inactiveRecipients);
+                acknowledgeRecipients.updateRecipientList(handler.acknowledgeRecipients);
                 $set("customTemplate", handler.customTemplate);
                 contextArray = new Array();
                 for(var k = 0; k < handler.additionalContext.length; k+=1)
@@ -496,6 +509,9 @@
                 $set("activeProcessTimeout", handler.activeProcessTimeout);
                 $set("inactiveProcessCommand", handler.inactiveProcessCommand);
                 $set("inactiveProcessTimeout", handler.inactiveProcessTimeout);
+                $set("acknowledgeProcessCommand", handler.acknowledgeProcessCommand);
+                $set("acknowledgeProcessTimeout", handler.acknowledgeProcessTimeout);
+                $set("acknowledgeProcessEvenIfInactive", handler.acknowledgeProcessEvenIfInactive);
             }
         }
         else {
@@ -526,6 +542,7 @@
             emailRecipients.updateRecipientList();
             escalRecipients.updateRecipientList();
             inactiveRecipients.updateRecipientList();
+            acknowledgeRecipients.updateRecipientList();
             contextArray = new Array();
             writeContextArray("emailContextTable");
             writeContextArray("setpointContextTable");
@@ -538,9 +555,11 @@
         handlerTypeChanged();
         activeActionChanged();
         inactiveActionChanged();
+        acknowledgeActionChanged();
         targetPointSelectChanged();
         sendEscalationChanged();
         sendInactiveChanged();
+        sendAcknowledgeChanged();
     }
     
     var currentHandlerEditor;
@@ -651,6 +670,34 @@
         }
     }
     
+    function acknowledgeActionChanged() {
+        var action = $get("acknowledgeAction");
+        if (action == <c:out value="<%= SetPointEventHandlerVO.SET_ACTION_POINT_VALUE %>"/>) {
+            show("acknowledgePointIdRow");
+            hide("acknowledgeValueToSetRow");
+            hide("acknowledgeScriptRow");
+            show("acknowledgePointIdRow");
+        }
+        else if (action == <c:out value="<%= SetPointEventHandlerVO.SET_ACTION_STATIC_VALUE %>"/>) {
+            hide("acknowledgePointIdRow");
+            show("acknowledgeValueToSetRow");
+            hide("acknowledgeScriptRow");
+            show("acknowledgePointIdRow");
+        }
+        else if (action == <c:out value="<%= SetPointEventHandlerVO.SET_ACTION_SCRIPT_VALUE %>"/>) {
+            hide("acknowledgePointIdRow");
+            hide("acknowledgeValueToSetRow");
+            show("acknowledgeScriptRow");
+            show("acknowledgePointIdRow");
+        }
+        else {
+            hide("acknowledgePointIdRow");
+            hide("acknowledgeValueToSetRow");
+            hide("acknowledgeScriptRow");
+            hide("acknowledgePointIdRow");
+        }
+    }
+    
     function sendEscalationChanged() {
         if ($get("sendEscalation")) {
         	show("repeatEscalationsRow")
@@ -686,11 +733,13 @@
             var emailList = emailRecipients.createRecipientArray();
             var escalList = escalRecipients.createRecipientArray();
             var inactiveList = inactiveRecipients.createRecipientArray();
+            var acknowledgeList = acknowledgeRecipients.createRecipientArray();
             var context = createContextArray();
             EventHandlersDwr.saveEmailEventHandler(eventType.type, eventType.subtype, eventType.typeRef1,
                     eventType.typeRef2, handlerId, xid, alias, disabled, emailList, $get("customTemplate"), $get("sendEscalation"), $get("repeatEscalations"),
                     $get("escalationDelayType"), $get("escalationDelay"), escalList, $get("sendInactive"),
-                    $get("inactiveOverride"), inactiveList, $get("includeSystemInfo"), $get("includePointValueCount"), $get("includeLogfile"), context,
+                    $get("inactiveOverride"), inactiveList, $get("sendAcknowledge"), $get("sendAcknowledgeEvenIfInactive"), $get("acknowledgeOverride"), acknowledgeList,
+                     $get("includeSystemInfo"), $get("includePointValueCount"), $get("includeLogfile"), context,
                     getScriptPermissions(), emailScriptEditor.getValue(), saveEventHandlerCB);
         }
         else if (handlerType == '<c:out value="<%= SetPointEventHandlerDefinition.TYPE_NAME %>"/>') {
@@ -698,13 +747,14 @@
             EventHandlersDwr.saveSetPointEventHandler(eventType.type, eventType.subtype, eventType.typeRef1,
                     eventType.typeRef2, handlerId, xid, alias, disabled, targetPointSelector.value,
                     $get("activeAction"), $get("setPointValueActive"), activePointSelector.value, activeEditor.getValue(), $get("inactiveAction"), 
-                    $get("setPointValueInactive"), inactivePointSelector.value, inactiveEditor.getValue(), context, getScriptPermissions(), saveEventHandlerCB);
+                    $get("setPointValueInactive"), inactivePointSelector.value, inactiveEditor.getValue(), $get("acknowledgeAction"), $get("acknowledgeActionEvenIfInactive"),
+                    $get("setPointValueAcknowledge"), acknowledgePointSelector.value, acknowledgeEditor.getValue(), context, getScriptPermissions(), saveEventHandlerCB);
         }
         else if ('handlerType == <c:out value="<%= ProcessEventHandlerDefinition.TYPE_NAME %>"/>') {
             EventHandlersDwr.saveProcessEventHandler(eventType.type, eventType.subtype, eventType.typeRef1,
                     eventType.typeRef2, handlerId, xid, alias, disabled, $get("activeProcessCommand"),
                     $get("activeProcessTimeout"), $get("inactiveProcessCommand"), $get("inactiveProcessTimeout"), 
-                    saveEventHandlerCB);
+                    $get("acknowledgeProcessCommand"), $get("acknowledgeProcessTimeout"), $get("acknowledgeProcessEvenIfInactive"), saveEventHandlerCB);
         }
     }
     
@@ -759,7 +809,14 @@
    	                $set("inactiveScriptValidationOutput", output);
    	                show("inactiveScriptValidationOutput");
    	            }
-   			}  else if(type == "<c:out value="<%= EmailEventHandlerDefinition.EMAIL_SCRIPT_TYPE %>"/>") {
+   			} else if(type == "<c:out value="<%= SetPointEventHandlerDefinition.ACKNOWLEDGE_SCRIPT_TYPE %>"/>") {
+   	            hide("acknowledgeScriptValidationOutput");
+   	            if (response.data.out){
+   	                output = response.data.out;
+   	                $set("acknowledgeScriptValidationOutput", output);
+   	                show("acknowledgeScriptValidationOutput");
+   	            }
+   			} else if(type == "<c:out value="<%= EmailEventHandlerDefinition.EMAIL_SCRIPT_TYPE %>"/>") {
    	            hide("emailScriptValidationOutput");
    	            if (response.data.out){
    	                output = response.data.out;
@@ -775,9 +832,20 @@
         showMessage("userMessage", msg);
     }
     
-    function testProcessCommand(active) {
-        var comm = active ? $get("activeProcessCommand") : $get("inactiveProcessCommand")
-        var to = active ? $get("activeProcessTimeout") : $get("inactiveProcessTimeout")
+    function testProcessCommand(type) {
+        var comm, to;
+        if(type === "active") {
+          comm = $get("activeProcessCommand");
+          to = $get("activeProcessTimeout");
+        } else if(type === "inactive") {
+          comm = $get("inactiveProcessCommand");
+          to = $get("inactiveProcessTimeout");
+        } else if(type === "acknowledge") { 
+          comm = $get("acknowledgeProcessCommand");
+          to = $get("acknowledgeProcessTimeout");
+        } else {
+          alert("Unknown process command type: " + type);
+        }
         EventHandlersDwr.testProcessCommand(comm, to, function(msg) {
             if (msg)
                 alert(msg);
@@ -800,6 +868,26 @@
             show("inactiveAddresses2");
         else
             hide("inactiveAddresses2");
+    }
+    
+    function sendAcknowledgeChanged() {
+        if ($get("sendAcknowledge")) {
+            show("acknowledgeAddresses1");
+            show("sendAcknowledgeEvenIfInactiveRow");
+            acknowledgeOverrideChanged();
+        }
+        else {
+            hide("acknowledgeAddresses1");
+            hide("acknowledgeAddresses2");
+            hide("sendAcknowledgeEvenIfInactiveRow");
+        }
+    }
+    
+    function acknowledgeOverrideChanged() {
+        if ($get("acknowledgeOverride"))
+            show("acknowledgeAddresses2");
+        else
+            hide("acknowledgeAddresses2");
     }
     
     //Controls for the extra context table in email handlers
@@ -1053,6 +1141,46 @@
                 <div id="inactiveScriptValidationOutput" style="display:none;color:green; width: 100%px; overflow: auto"></div>
 			  </td>
             </tr>
+            
+            <%-- Acknowledgement --%>
+            <tr>
+              <td class="formLabelRequired"><fmt:message key="eventHandlers.acknowledgeAction"/></td>
+              <td class="formField">
+                <select id="acknowledgeAction" onchange="acknowledgeActionChanged()">
+                  <option value="<c:out value="<%= SetPointEventHandlerVO.SET_ACTION_NONE %>"/>"><fmt:message key="eventHandlers.action.none"/></option>
+                  <option value="<c:out value="<%= SetPointEventHandlerVO.SET_ACTION_POINT_VALUE %>"/>"><fmt:message key="eventHandlers.action.point"/></option>
+                  <option value="<c:out value="<%= SetPointEventHandlerVO.SET_ACTION_STATIC_VALUE %>"/>"><fmt:message key="eventHandlers.action.static"/></option>
+                  <option value="<c:out value="<%= SetPointEventHandlerVO.SET_ACTION_SCRIPT_VALUE %>"/>"><fmt:message key="eventHandlers.action.script"/></option>
+                </select>
+              </td>
+            </tr>
+            
+            <tr id="acknowledgePointIdRow">
+              <td class="formLabel"><fmt:message key="eventHandlers.acknowledgeInactiveEvents"/></td>
+              <td class="formField"><input type="checkbox" id="acknowledgeActionEvenIfInactive"></td>
+            </tr>
+          
+            <tr id="acknowledgePointIdRow">
+              <td class="formLabel"><fmt:message key="eventHandlers.sourcePoint"/></td>
+              <td class="formField"><select id="acknowledgePointId"></select></td>
+            </tr>
+          
+            <tr id="acknowledgeValueToSetRow">
+              <td class="formLabel"><fmt:message key="eventHandlers.valueToSet"/></td>
+              <td class="formField" id="acknowledgeValueToSetContent"></td>
+            </tr>
+            
+            <tr id="acknowledgeScriptRow">
+              <td class="formLabelRequired">
+                <fmt:message key="eventHandlers.script"/> <%-- SetPointEventHandlerDefinition.ACKNOWLEDGE_SCRIPT_TYPE --%>
+                <tag:img png="accept" onclick='validateScript(acknowledgeEditor, 1);' title="common.validate"/>
+              </td>
+              <td class="formField">
+                <div id="acknowledgeScript" style="font-family: Courier New !important; position: relative; height:400px; width:700px"></div>
+                <div id="acknowledgeScriptValidationOutput" style="display:none;color:green; width: 100%px; overflow: auto"></div>
+			  </td>
+            </tr>
+            
             <tr><td class="horzSeparator" colspan="2"></td></tr>
             <tr><td class="formLabel"><fmt:message key="eventHandlers.additionalContext"/></td>
               <td><select id="setpointAdditionalContextSelector"></select></td>
@@ -1156,6 +1284,25 @@
               
             <tbody id="inactiveRecipients"></tbody>
             
+            <tr><td class="horzSeparator" colspan="2"></td></tr>
+            
+            <tr>
+              <td class="formLabelRequired"><fmt:message key="eventHandlers.acknowledgeNotif"/></td>
+              <td class="formField"><input id="sendAcknowledge" type="checkbox" onclick="sendAcknowledgeChanged()"/></td>
+            </tr>
+            
+            <tr id="sendAcknowledgeEvenIfInactiveRow">
+              <td class="formLabel"><fmt:message key="eventHandlers.acknowledgeInactiveEvents"/></td>
+              <td class="formField"><input type="checkbox" id="sendAcknowledgeEvenIfInactive"></td>
+            </tr>
+            
+            <tr id="acknowledgeAddresses1">
+              <td class="formLabelRequired"><fmt:message key="eventHandlers.acknowledgeOverride"/></td>
+              <td class="formField"><input id="acknowledgeOverride" type="checkbox" onclick="acknowledgeOverrideChanged()"/></td>
+            </tr>
+              
+            <tbody id="acknowledgeRecipients"></tbody>
+            
           </table>
           
           <table id="handler<c:out value="<%= ProcessEventHandlerDefinition.TYPE_NAME %>"/>" style="display:none; width: 100%">
@@ -1163,7 +1310,7 @@
               <td class="formLabelRequired"><fmt:message key="eventHandlers.activeCommand"/></td>
               <td class="formField">
                 <input type="text" id="activeProcessCommand" class="formLong"/>
-                <tag:img png="cog_go" onclick="testProcessCommand(true)" title="eventHandlers.commandTest.title"/>
+                <tag:img png="cog_go" onclick="testProcessCommand('active')" title="eventHandlers.commandTest.title"/>
               </td>
             </tr>
             
@@ -1176,13 +1323,31 @@
               <td class="formLabelRequired"><fmt:message key="eventHandlers.inactiveCommand"/></td>
               <td class="formField">
                 <input type="text" id="inactiveProcessCommand" class="formLong"/>
-                <tag:img png="cog_go" onclick="testProcessCommand(false)" title="eventHandlers.commandTest.title"/>
+                <tag:img png="cog_go" onclick="testProcessCommand('inactive')" title="eventHandlers.commandTest.title"/>
               </td>
             </tr>
             
             <tr>
               <td class="formLabelRequired"><fmt:message key="eventHandlers.inactiveTimeout"/></td>
               <td class="formField"><input type="text" id="inactiveProcessTimeout" class="formShort"/></td>
+            </tr>
+            
+            <tr>
+              <td class="formLabelRequired"><fmt:message key="eventHandlers.acknowledgeCommand"/></td>
+              <td class="formField">
+                <input type="text" id="acknowledgeProcessCommand" class="formLong"/>
+                <tag:img png="cog_go" onclick="testProcessCommand('acknowledge')" title="eventHandlers.commandTest.title"/>
+              </td>
+            </tr>
+            
+            <tr>
+              <td class="formLabelRequired"><fmt:message key="eventHandlers.acknowledgeTimeout"/></td>
+              <td class="formField"><input type="text" id="acknowledgeProcessTimeout" class="formShort"/></td>
+            </tr>
+            
+            <tr>
+              <td class="formLabel"><fmt:message key="eventHandlers.acknowledgeInactiveEvents"/></td>
+              <td class="formField"><input type="checkbox" id="acknowledgeProcessEvenIfInactive"></td>
             </tr>
           </table>
           
@@ -1201,13 +1366,16 @@
   ace.config.set("basePath", "/resources/ace");
     var activeEditor = ace.edit("activeScript");
     var inactiveEditor = ace.edit("inactiveScript");
+    var acknowledgeEditor = ace.edit("acknowledgeScript");
     var emailScriptEditor = ace.edit("emailScript");
     activeEditor.setTheme("ace/theme/tomorrow_night_bright");
     inactiveEditor.setTheme("ace/theme/tomorrow_night_bright");
+    acknowledgeEditor.setTheme("ace/theme/tomorrow_night_bright");
     emailScriptEditor.setTheme("ace/theme/tomorrow_night_bright");
     var JavaScriptMode = ace.require("ace/mode/javascript").Mode;
     activeEditor.getSession().setMode(new JavaScriptMode());
     inactiveEditor.getSession().setMode(new JavaScriptMode());
+    acknowledgeEditor.getSession().setMode(new JavaScriptMode());
     emailScriptEditor.getSession().setMode(new JavaScriptMode());
 </script>
 </jsp:body>
