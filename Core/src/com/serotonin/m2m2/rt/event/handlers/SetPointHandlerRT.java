@@ -79,7 +79,18 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
         } else
         	inactiveScript = null;
         
-        if(activeScript != null || inactiveScript != null) {
+        if(vo.getAcknowledgeAction() == SetPointEventHandlerVO.SET_ACTION_SCRIPT_VALUE) {
+            try {
+                acknowledgeScript = CompiledScriptExecutor.compile(vo.getAcknowledgeScript());
+            } catch(ScriptException e) {
+                raiseFailureEvent(new TranslatableMessage("eventHandlers.invalidAcknowledgeScriptError", 
+                        e.getMessage() == null ? e.getCause().getMessage() : e.getMessage()), null);
+            }
+        } else
+            acknowledgeScript = null;
+        
+        if(activeScript != null || inactiveScript != null || acknowledgeScript != null) {
+            setCallback = new SetCallback(vo.getScriptPermissions());
         	importExclusions = new ArrayList<JsonImportExclusion>();
         	importExclusions.add(new JsonImportExclusion("xid", vo.getXid()) {
 				@Override
@@ -87,13 +98,10 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
 					return ConfigurationExportData.EVENT_HANDLERS;
 				}
         	});
-        } else
+        } else {
         	importExclusions = null;
-        
-        if(activeScript != null || inactiveScript != null)
-        	setCallback = new SetCallback(vo.getScriptPermissions());
-        else
         	setCallback = null;
+        }	
     }
 
     @Override
@@ -324,7 +332,7 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
             throw new ShouldNeverHappenException("Unknown acknowledge action: " + vo.getAcknowledgeAction());
 
         Common.backgroundProcessing.addWorkItem(new SetPointWorkItem(vo.getTargetPointId(), new PointValueTime(value,
-                evt.getRtnTimestamp()), this));
+                evt.getAcknowledgedTimestamp()), this));
     }
 
     private void raiseFailureEvent(TranslatableMessage message, EventType et) {

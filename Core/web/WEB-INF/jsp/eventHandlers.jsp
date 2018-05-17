@@ -39,7 +39,7 @@
     var escalRecipients;
     var inactiveRecipients;
     var store;
-    var targetPointSelector,activePointSelector,inactivePointSelector;
+    var targetPointSelector,activePointSelector,inactivePointSelector,acknowledgePointSelector;
     var userNewScriptPermissions;
     
     var contextArray = new Array(); 
@@ -101,6 +101,15 @@
                 queryExpr: "*\${0}*",
                 required: true
             }, "inactivePointId");
+            acknowledgePointSelector = new dijit.form.FilteringSelect({
+                store: null,
+                searchAttr: "name",                  
+                autoComplete: false,
+                style: "width: 100%",
+                highlightMatch: "all",
+                queryExpr: "*\${0}*",
+                required: true
+            }, "acknowledgePointId");
             emailAdditionalContextSelector = new dijit.form.ComboBox({
                 store: new dojo.store.Memory({data: allPoints}),
                 labelType: "html",
@@ -589,15 +598,19 @@
         
         var activeValueStr = "";
         var inactiveValueStr = "";
+        var acknowledgeValueStr = "";
         if (selectedHandlerNode) {
             var handler = $$(selectedHandlerNode.item, "object");
             activeValueStr = handler.activeValueToSet;
             inactiveValueStr = handler.inactiveValueToSet;
+            acknowledgeValueStr = handler.acknowledgeValueToSet;
         }
         EventHandlersDwr.createSetValueContent(targetPointId, activeValueStr, "Active",
                 function(content) { $("activeValueToSetContent").innerHTML = content; });
         EventHandlersDwr.createSetValueContent(targetPointId, inactiveValueStr, "Inactive",
                 function(content) { $("inactiveValueToSetContent").innerHTML = content; });
+        EventHandlersDwr.createSetValueContent(targetPointId, acknowledgeValueStr, "Acknowledge",
+                function(content) { $("acknowledgeValueToSetContent").innerHTML = content; });
         
         // Update the source point lists.
         var targetDataTypeId = getPoint(targetPointId).dataType;
@@ -606,12 +619,15 @@
         activePointSelector.reset();
 		inactivePointSelector.store = new dojo.store.Memory();  
 		inactivePointSelector.reset();
+		acknowledgePointSelector.store = new dojo.store.Memory();  
+		acknowledgePointSelector.reset();
 		//Add the necessary points
         for (var i=0; i<allPoints.length; i++) {
             dp = allPoints[i];
             if (dp.id != targetPointId && dp.dataType == targetDataTypeId) {
                 activePointSelector.store.put(dp);
                 inactivePointSelector.store.put(dp);
+                acknowledgePointSelector.store.put(dp);
             }
         }
 		//Set the values to the currently selected handler
@@ -619,6 +635,7 @@
             var handler = $$(selectedHandlerNode.item, "object");
             activePointSelector.set('value',handler.activePointId);
             inactivePointSelector.set('value',handler.inactivePointId);
+            acknowledgePointSelector.set('value',handler.acknowledgePointId);
         }
     }
     
@@ -676,25 +693,25 @@
             show("acknowledgePointIdRow");
             hide("acknowledgeValueToSetRow");
             hide("acknowledgeScriptRow");
-            show("acknowledgePointIdRow");
+            show("acknowledgeActionEvenIfInactiveRow");
         }
         else if (action == <c:out value="<%= SetPointEventHandlerVO.SET_ACTION_STATIC_VALUE %>"/>) {
             hide("acknowledgePointIdRow");
             show("acknowledgeValueToSetRow");
             hide("acknowledgeScriptRow");
-            show("acknowledgePointIdRow");
+            show("acknowledgeActionEvenIfInactiveRow");
         }
         else if (action == <c:out value="<%= SetPointEventHandlerVO.SET_ACTION_SCRIPT_VALUE %>"/>) {
             hide("acknowledgePointIdRow");
             hide("acknowledgeValueToSetRow");
             show("acknowledgeScriptRow");
-            show("acknowledgePointIdRow");
+            show("acknowledgeActionEvenIfInactiveRow");
         }
         else {
             hide("acknowledgePointIdRow");
             hide("acknowledgeValueToSetRow");
             hide("acknowledgeScriptRow");
-            hide("acknowledgePointIdRow");
+            hide("acknowledgeActionEvenIfInactiveRow");
         }
     }
     
@@ -1155,7 +1172,7 @@
               </td>
             </tr>
             
-            <tr id="acknowledgePointIdRow">
+            <tr id="acknowledgeActionEvenIfInactiveRow">
               <td class="formLabel"><fmt:message key="eventHandlers.acknowledgeInactiveEvents"/></td>
               <td class="formField"><input type="checkbox" id="acknowledgeActionEvenIfInactive"></td>
             </tr>
