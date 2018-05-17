@@ -420,6 +420,8 @@ public class EventHandlersDwr extends BaseDwr {
                         response.addMessage("activeScript", new TranslatableMessage("event.script.contextPointMissing", cxt.getValue(), cxt.getKey()));
                     else if(type == SetPointEventHandlerDefinition.INACTIVE_SCRIPT_TYPE)
                         response.addMessage("inactiveScript", new TranslatableMessage("event.script.contextPointMissing", cxt.getValue(), cxt.getKey()));
+                    else if(type == SetPointEventHandlerDefinition.ACKNOWLEDGE_SCRIPT_TYPE)
+                        response.addMessage("acknowledgeScript", new TranslatableMessage("event.script.contextPointMissing", cxt.getValue(), cxt.getKey()));
                     else if(type == EmailEventHandlerDefinition.EMAIL_SCRIPT_TYPE)
                         response.addMessage("emailScript", new TranslatableMessage("event.script.contextPointMissing", cxt.getValue(), cxt.getKey()));
                     return response;
@@ -498,6 +500,8 @@ public class EventHandlersDwr extends BaseDwr {
             response.addMessage("activeScript", message);
         else if(type == SetPointEventHandlerDefinition.INACTIVE_SCRIPT_TYPE)
             response.addMessage("inactiveScript", message);
+        else if(type == SetPointEventHandlerDefinition.ACKNOWLEDGE_SCRIPT_TYPE)
+            response.addMessage("acknowledgeScript", message);
         else if(type == EmailEventHandlerDefinition.EMAIL_SCRIPT_TYPE)
             response.addMessage("emailScript", message);
         return response;
