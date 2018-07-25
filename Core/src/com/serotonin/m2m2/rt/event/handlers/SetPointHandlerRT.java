@@ -347,10 +347,10 @@ public class SetPointHandlerRT extends EventHandlerRT<SetPointEventHandlerVO> im
         }
 
         SystemEventType eventType = new SystemEventType(SystemEventType.TYPE_SET_POINT_HANDLER_FAILURE, vo.getId());
-        if (StringUtils.isBlank(vo.getAlias()))
+        if (StringUtils.isBlank(vo.getName()))
             message = new TranslatableMessage("event.setPointFailed", message);
         else
-            message = new TranslatableMessage("event.setPointFailed.alias", vo.getAlias(), message);
+            message = new TranslatableMessage("event.setPointFailed.alias", vo.getName(), message);
         SystemEventType.raiseEvent(eventType, Common.timer.currentTimeMillis(), false, message);
     }
 

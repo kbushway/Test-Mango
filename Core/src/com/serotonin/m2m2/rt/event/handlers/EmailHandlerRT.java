@@ -124,9 +124,7 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
 
     @Override
     public void eventRaised(EventInstance evt) {
-        // Get the email addresses to send to
-        activeRecipients = MailingListDao.instance.getRecipientAddresses(vo.getActiveRecipients(),
-                new DateTime(evt.getActiveTimestamp()));
+        
 
         // Send an email to the active recipients.
         sendEmail(evt, NotificationType.ACTIVE, activeRecipients);
@@ -138,14 +136,6 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
                         new DateTime(evt.getActiveTimestamp()));
             else
                 inactiveRecipients = activeRecipients;
-        }
-        
-        if (vo.isSendAcknowledge()) {
-            if (vo.isAcknowledgeOverride())
-                acknowledgeRecipients = MailingListDao.instance.getRecipientAddresses(vo.getAcknowledgeRecipients(),
-                        new DateTime(evt.getActiveTimestamp()));
-            else
-                acknowledgeRecipients = activeRecipients;
         }
 
         // If an escalation is to be sent, set up timeout to trigger it.
@@ -195,10 +185,18 @@ public class EmailHandlerRT extends EventHandlerRT<EmailEventHandlerVO> implemen
     
     @Override
     public void eventAcknowledged(EventInstance evt) {
-        //TODO decide if we cancel escalation?
-        if(evt.isActive() || !evt.isRtnApplicable() || vo.isSendAcknowledgeEvenIfInactive())
+        //Don't cancel escalation as the event is potentially still active
+        if(vo.isSendAcknowledge() && (evt.isActive() || !evt.isRtnApplicable() || vo.isSendAcknowledgeEvenIfInactive())) {
+
+            if (vo.isAcknowledgeOverride())
+                acknowledgeRecipients = MailingListDao.instance.getRecipientAddresses(vo.getAcknowledgeRecipients(),
+                        new DateTime(evt.getActiveTimestamp()));
+            else
+                acknowledgeRecipients = MailingListDao.instance.getRecipientAddresses(vo.getActiveRecipients(),
+                        new DateTime(evt.getActiveTimestamp()));
             if(acknowledgeRecipients != null && acknowledgeRecipients.size() > 0)
                 sendEmail(evt, NotificationType.ACKNOWLEDGE, acknowledgeRecipients);
+        }
     }
 
     public static void sendActiveEmail(EventInstance evt, Set<String> addresses) {

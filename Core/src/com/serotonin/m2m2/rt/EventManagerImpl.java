@@ -466,6 +466,7 @@ public class EventManagerImpl implements EventManager {
             
             // only ack the event if it exists and is not already acknowledged
             if (dbEvent != null && !dbEvent.isAcknowledged()) {
+                //TODO We NEED a context here based on event type, argh!
                 boolean acked = acknowledgeEvent(dbEvent, time, user, alternateAckSource);
                 
                 // unlikely case that someone else ackd the event at the same time
