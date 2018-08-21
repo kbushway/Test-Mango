@@ -17,8 +17,13 @@
 
 package org.apache.jasper.servlet;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,6 +108,8 @@ public class JspServletWrapper {
     private final boolean unloadByCount;
     private final boolean unloadByIdle;
 
+    private byte[] jspHash;
+    
     /*
      * JspServletWrapper for JSP pages.
      */
@@ -358,14 +365,36 @@ public class JspServletWrapper {
             }
 
             /*
+             * EDIT TP: First time check for precompiled JSP and generate hash
+             */
+            if(firstTime) {
+                synchronized (this) {
+                    File servletFile = new File(ctxt.getClassFileName());
+                    if(servletFile.exists()) {
+                        firstTime = false;
+                        jspHash = computeHash(ctxt.getClassFileName());
+                    }
+                }
+            }
+            /*
              * (1) Compile
              */
             if (options.getDevelopment() || firstTime ) {
                 synchronized (this) {
                     firstTime = false;
-
-                    // The following sets reload to true, if necessary
-                    ctxt.compile();
+                    //EDIT TP: Check to see if the class file never existed or was removed or has changed
+                    byte[] newHash = null;
+                    if(jspHash != null) {
+                        //Will return null if file DNE
+                        newHash = computeHash(ctxt.getClassFileName());
+                    }
+                    //Make sure we compile if they are different or if newHash is null
+                    if(newHash == null || !Arrays.equals(newHash, jspHash)) {
+                        // The following sets reload to true, if necessary
+                        ctxt.compile();
+                        //Reset the hash
+                        jspHash = computeHash(ctxt.getClassFileName());
+                    }
                 }
             } else {
                 if (compileException != null) {
@@ -600,6 +629,30 @@ public class JspServletWrapper {
             }
             return new JasperException(ex);
         }
+    }
+    
+    /**
+     * Compute hash of existing file, if file DNE return null
+     * @param file
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
+    private byte[] computeHash(String file) throws NoSuchAlgorithmException, IOException {
+        File input = new File(file);
+        if(!input.exists())
+            return null;
+        MessageDigest md = MessageDigest.getInstance("SHA1");
+        try(FileInputStream fis = new FileInputStream(file)){
+            byte[] dataBytes = new byte[1024];
+            
+            int nread = 0; 
+            
+            while ((nread = fis.read(dataBytes)) != -1) {
+              md.update(dataBytes, 0, nread);
+            };
+        }
+        return md.digest();
     }
 }
 
