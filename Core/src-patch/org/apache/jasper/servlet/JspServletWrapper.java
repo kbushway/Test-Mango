@@ -17,6 +17,7 @@
 
 package org.apache.jasper.servlet;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
@@ -362,10 +363,13 @@ public class JspServletWrapper {
              */
             if (options.getDevelopment() || firstTime ) {
                 synchronized (this) {
+                    //EDIT. TP: Check to see if the class is compiled and if so don't bother
                     firstTime = false;
-
-                    // The following sets reload to true, if necessary
-                    ctxt.compile();
+                    File servletFile = new File(ctxt.getClassFileName());
+                    if(!servletFile.exists()) {
+                        // The following sets reload to true, if necessary
+                        ctxt.compile();
+                    }
                 }
             } else {
                 if (compileException != null) {
