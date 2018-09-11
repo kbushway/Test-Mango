@@ -79,6 +79,8 @@ public class Module {
     private final String dependencies;
     private final int loadOrder;
     private boolean markedForDeletion;
+    private boolean isDaoInstall = false;
+    private boolean isDaoUpgrade = false;
 
     private final List<ModuleElementDefinition> definitions = new ArrayList<>();
 
@@ -187,6 +189,12 @@ public class Module {
      * used by client code.
      */
     public void postDatabase(boolean install, boolean upgrade) {
+        Version oldVersion = InstalledModulesDao.instance.getModuleVersion(name);
+        if(oldVersion == null)
+            isDaoInstall = true;
+        else if(oldVersion.lessThan(version))
+            isDaoUpgrade = true;
+        
         for (ModuleElementDefinition df : definitions)
             df.postDatabase(install, upgrade);
     }
