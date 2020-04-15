@@ -127,7 +127,7 @@ abstract public class PermissionDefinition extends ModuleElementDefinition {
     /**
      * Replace the roles on this permission.  Throws validation exeption if xids DNE
      *
-     * @param roles
+     * @param scriptRoles
      */
     public void setRoles(Set<String> roleXids) throws ValidationException {
         //TODO Transaction rollback etc?
