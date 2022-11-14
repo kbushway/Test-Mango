@@ -11,7 +11,7 @@
   <jettyVersion>9.2.2.v20140723</jettyVersion>
   <!-- previous spring version: 3.1.1.RELEASE,3.1.2.RELEASE, 4.0.5.RELEASE 
    for websockets support -->
-  <springVersion>4.0.5.RELEASE</springVersion>
+  <springVersion>4.2.7.RELEASE</springVersion>
  </properties>
 
 
